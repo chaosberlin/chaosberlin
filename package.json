@@ -1,0 +1,18 @@
+{
+  "name": "chaosberlin-backend",
+  "version": "0.1.0",
+  "description": "Self-service subdomain registry for chaosberlin — GitHub login + PR + Cloudflare DNS via GitHub Actions",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot ./index.ts",
+    "start": "bun ./index.ts",
+    "test": "bun test",
+    "validate": "bun ./scripts/validate.ts",
+    "provision:dry": "bun ./scripts/provision.ts --dry-run",
+    "build:site": "bun scripts/build-site.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
