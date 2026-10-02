@@ -1,0 +1,9 @@
+{
+  "subdomain": "myapp",
+  "type": "CNAME",
+  "content": "myapp.pages.dev",
+  "ttl": 1,
+  "proxied": false,
+  "owner": "your-github-username",
+  "description": "copy this file to <yoursubdomain>.json and open a PR"
+}

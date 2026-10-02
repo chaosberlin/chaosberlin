@@ -1,0 +1,8 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #0b0b0e; color: #eee; }
+main { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+a { color: #7dd3fc; }
+code, pre { background: #1a1a22; padding: 2px 6px; border-radius: 6px; }
+pre { padding: 1rem; overflow-x: auto; }
+form { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+input, select, button { padding: .5rem .75rem; border-radius: 8px; border: 1px solid #333; }
+button { cursor: pointer; }
