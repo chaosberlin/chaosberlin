@@ -7,7 +7,7 @@ Free `<name>.chaos.berlin` subdomains. One YAML file, one pull request.
 ## Claim
 
 1. Open [chaos.berlin/new](https://chaos.berlin/new). It creates `requests/<name>.yaml` in your fork.
-2. Fill it in and open a pull request. The **validate** check must pass.
+2. Fill it in and open a pull request. Two checks must pass: **validate** (format + permissions) and **https** (your target can serve HTTPS).
 3. A maintainer merges it, and DNS is live within minutes.
 4. Add `<name>.chaos.berlin` as the custom domain at your host.
 

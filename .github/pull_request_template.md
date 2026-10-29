@@ -48,7 +48,7 @@ description: My personal site
 
 ## 🚦 What happens next
 
-1. **Validate** checks the file and your permissions ([who can change what](../blob/main/requests/README.md#who-can-change-what)). Fix anything it flags.
+1. **validate** checks the file and your permissions, **https** checks that your target can serve HTTPS ([who can change what](../blob/main/requests/README.md#who-can-change-what)). Fix anything it flags.
 2. A maintainer reviews and merges.
 3. The DNS record goes live within a few minutes. The **`dns/publish`** status on the merge commit shows ✓ when it's done.
 
