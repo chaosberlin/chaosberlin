@@ -8,7 +8,6 @@
     "start": "bun ./index.ts",
     "test": "bun test",
     "validate": "bun ./scripts/validate.ts",
-    "provision:dry": "bun ./scripts/provision.ts --dry-run",
     "build:site": "bun scripts/build-site.ts"
   },
   "dependencies": {},

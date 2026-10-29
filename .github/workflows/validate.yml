@@ -2,30 +2,41 @@ name: Validate subdomain requests
 
 on:
   pull_request:
-    paths:
-      - "requests/**"
-      - "data/**"
-      - "src/validation.ts"
-      - "scripts/validate.ts"
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - run: bun install
       - name: Validate requests/*.json
         run: bun ./scripts/validate.ts
-      - name: Dry-run Cloudflare plan
-        run: bun ./scripts/provision.ts --dry-run
+      # The checkout is the merge commit, so HEAD^1 is the base branch.
+      - name: Check ownership
         env:
-          BASE_DOMAIN: ${{ vars.BASE_DOMAIN || 'example.com' }}
-          CLOUDFLARE_API_TOKEN: changeme
-          CLOUDFLARE_ZONE_ID: changeme
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          MAINTAINER: ${{ github.repository_owner }}
+        run: |
+          author=$(echo "$AUTHOR" | tr A-Z a-z)
+          [ "$author" = "$(echo "$MAINTAINER" | tr A-Z a-z)" ] && { echo "maintainer PR, skipping"; exit 0; }
+          failed=0
+          while IFS=$'\t' read -r status path; do
+            [ -z "$path" ] && continue
+            if [[ ! "$path" =~ ^requests/[^/]+\.json$ ]] || [ "$path" = requests/example.json ]; then
+              echo "::error file=$path::only requests/<name>.json may be changed in a request PR"; failed=1; continue
+            fi
+            if [ "$status" = A ]; then owner=$(jq -r .owner "$path" 2>/dev/null); else owner=$(git show "HEAD^1:$path" | jq -r .owner 2>/dev/null); fi
+            if [ "$(echo "$owner" | tr A-Z a-z)" != "$author" ]; then
+              echo "::error file=$path::owner is '$owner' but this PR is from '$AUTHOR'"; failed=1
+            fi
+          done < <(git diff --name-status --no-renames HEAD^1 HEAD)
+          exit $failed

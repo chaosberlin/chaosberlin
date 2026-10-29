@@ -24,3 +24,11 @@ test("rejects A with hostname", () => {
 test("fqdn helper", () => {
   expect(fqdn("MyApp", "Example.com")).toBe("myapp.example.com");
 });
+
+test("rejects private addresses and long TXT", () => {
+  expect(validateRequest({ subdomain: "x", type: "A", content: "192.168.1.1", owner: "a" }).ok).toBe(false);
+  expect(validateRequest({ subdomain: "x", type: "AAAA", content: "fd00::1", owner: "a" }).ok).toBe(false);
+  expect(validateRequest({ subdomain: "x", type: "AAAA", content: "not:an:ip", owner: "a" }).ok).toBe(false);
+  expect(validateRequest({ subdomain: "x", type: "AAAA", content: "2001:db8::1", owner: "a" }).ok).toBe(true);
+  expect(validateRequest({ subdomain: "x", type: "TXT", content: "a".repeat(256), owner: "a" }).ok).toBe(false);
+});

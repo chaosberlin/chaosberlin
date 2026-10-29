@@ -9,8 +9,9 @@ Anyone logged in with GitHub can get `YOURNAME.<domain>`:
    - name is lowercase `a-z0-9-`, ≤63 chars, not reserved
    - `type` is A / AAAA / CNAME / TXT with a valid target
    - filename matches `subdomain` (e.g. `myapp.json` for `"subdomain": "myapp"`)
-5. After merge, the `Provision Cloudflare DNS` action creates/updates the
-   Cloudflare DNS record automatically. No manual Cloudflare step needed.
+   It also checks that `owner` is you, and that you own any existing name you change or delete.
+5. After a maintainer merges, the DNS record goes live within a minute or two.
+   The `dns/publish` status on the merge commit shows the result.
 
 ## File format
 
@@ -26,10 +27,10 @@ Anyone logged in with GitHub can get `YOURNAME.<domain>`:
 }
 ```
 
-- `type: A` → `content` must be IPv4 (e.g. `192.0.2.1`)
-- `type: AAAA` → `content` must be IPv6
+- `type: A` → `content` must be a public IPv4 address
+- `type: AAAA` → `content` must be a public IPv6 address
 - `type: CNAME` → `content` must be a hostname (e.g. `x.pages.dev`, no `https://`)
-- `type: TXT` → any text, `proxied` must be false/omitted
+- `type: TXT` → up to 255 characters, `proxied` must be false/omitted
 - `ttl`: `1` (auto) or 60–86400
 - Reserved names (`www`, `mail`, `admin`, `api`, …) are rejected — see `src/validation.ts`.
 
