@@ -1,88 +1,73 @@
 # chaos.berlin
 
-Free `<name>.chaos.berlin` subdomains, handed out by pull request.
+Free `<name>.chaos.berlin` subdomains. One YAML file, one pull request.
 
-Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([source](https://github.com/chaosberlin/hello), [request](requests/hello.yaml), [PR #1](https://github.com/chaosberlin/chaosberlin/pull/1))
+**[→ Claim a subdomain](https://chaos.berlin/new)** · [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) · Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([request](requests/hello.yaml))
 
-## Get a subdomain
+## Claim
 
-1. **Host your site.** For example GitHub Pages, Vercel, Netlify, Cloudflare Pages or your own server.
-2. **Add a request file.** [Create `requests/<name>.yaml`](https://github.com/chaosberlin/chaosberlin/new/main/requests). GitHub forks the repo for you.
+1. Open [chaos.berlin/new](https://chaos.berlin/new). It creates `requests/<name>.yaml` in your fork.
+2. Fill it in and open a pull request. The **validate** check must pass.
+3. A maintainer merges it, and DNS is live within minutes.
+4. Add `<name>.chaos.berlin` as the custom domain at your host.
 
-   ```yaml
-   subdomain: alice
-   type: CNAME
-   content: alice.github.io
-   proxied: false
-   owner: your-github-username
-   description: My personal site
-   ```
-
-3. **Open a pull request.** The template has a checklist. The **validate** check must pass.
-4. **Wait for the merge.** The record goes live a few minutes after a maintainer merges. The `dns/publish` status on the merge commit shows ✓ when it's done.
-5. **Set `<name>.chaos.berlin` as the custom domain at your host.**
-
-To change or give up a name, open a PR that edits or deletes your file.
-
-## Rules
+```yaml
+subdomain: alice            # = file name
+type: CNAME                 # CNAME | A | AAAA | TXT
+content: alice.github.io
+proxied: false
+owner: alice                # your GitHub username
+collaborators: [bob]        # optional
+description: Personal site  # optional
+```
 
 | Field | Rule |
 | --- | --- |
-| `subdomain` | `a-z`, `0-9`, `-`, max 63 characters. Must match the file name. Not [reserved](src/validation.ts) (`www`, `mail`, `api`, …). |
-| `type` | `CNAME` (hostname), `A` (public IPv4), `AAAA` (public IPv6) or `TXT` (max 255 characters) |
-| `owner` | Your GitHub username. Max 5 names per person. |
-| `collaborators` | Optional list of GitHub usernames who may edit the records. |
-| `proxied` | Optional. `true` routes the name through Cloudflare. Keep `false` for GitHub Pages, Vercel and Netlify. Not allowed for `TXT`. |
-| `ttl` | Optional. `1` (auto, the default) or 60–86400 seconds. |
+| `subdomain` | `a-z0-9-`, max 63, not [reserved](src/validation.ts) |
+| `content` | CNAME: hostname · A/AAAA: public IP · TXT: max 255 chars |
+| `proxied` | `true` = traffic and HTTPS through Cloudflare. Not for TXT. |
+| `ttl` | `1` (auto) or 60–86400 |
 
-A PR may only touch `requests/<name>.yaml`. Names used for spam, phishing or malware are removed.
-
-## Who can change what
+## Permissions
 
 | | Add | Edit records | Edit collaborators | Delete | Transfer |
 | --- | --- | --- | --- | --- | --- |
-| Anyone | ✅ (as owner) | — | — | — | — |
-| Collaborator | — | ✅ | — | — | — |
-| Owner | — | ✅ | ✅ | ✅ | — |
+| Anyone | ✅ as owner, max 5 | | | | |
+| Collaborator | | ✅ | | | |
+| Owner | | ✅ | ✅ | ✅ | |
 | Maintainer | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-Nobody can change or remove another person's name. The **validate** check enforces this, and it always runs the rules from `main` (via `pull_request_target`), so a PR can't weaken them. More detail: [requests/README.md](requests/README.md).
+- A PR may only change `requests/<name>.yaml`.
+- These rules run from `main`, so a PR can't change them ([`src/permissions.ts`](src/permissions.ts)).
+
+## HTTPS
+
+- `proxied: true`: Cloudflare serves HTTPS automatically.
+- `proxied: false`: your host issues the certificate once DNS points to it. GitHub Pages, Vercel, Netlify and Cloudflare Pages do this on their own. On GitHub Pages, also turn on *Enforce HTTPS*. On your own server, use Let's Encrypt.
+
+Every 6 hours, [`https-check.yml`](.github/workflows/https-check.yml) tests all names and updates the [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) issue.
 
 ## How it works
 
 ```
-PR adds requests/<name>.yaml ─→ validate (format + permissions) ─→ maintainer merges
-  ─→ notify-backend ─→ chaosberlin/backend: re-validate, sync Cloudflare DNS
-  ─→ dns/publish status on the merge commit
+PR → validate (format + permissions, from main) → merge
+   → notify-backend → chaosberlin/backend (private): re-validate, sync Cloudflare
+   → dns/publish status on the merge commit
 ```
 
-| Repo | Visibility | Role |
-| --- | --- | --- |
-| [chaosberlin/chaosberlin](https://github.com/chaosberlin/chaosberlin) | public | Request files, PR checks, this README (also the profile page) |
-| chaosberlin/backend | private | Holds the Cloudflare credentials, writes DNS, reports back |
-| [chaosberlin/hello](https://github.com/chaosberlin/hello) | public | Example site behind `hello.chaos.berlin` |
-
-[chaos.berlin](https://chaos.berlin) itself redirects here.
+| Repo | |
+| --- | --- |
+| [chaosberlin/chaosberlin](https://github.com/chaosberlin/chaosberlin) | requests, checks, profile page |
+| chaosberlin/backend (private) | Cloudflare credentials, DNS sync |
+| [chaosberlin/hello](https://github.com/chaosberlin/hello) | example site |
 
 ## Development
 
 ```sh
-bun install
-bun test             # validation rules
-bun run validate     # check requests/*.yaml
-bun run dev          # local helper app at http://localhost:3000 (GitHub login, writes request files)
-bun run build:site   # static portal into dist/
+bun install && bun test
+bun run validate                 # check requests/*.yaml
+bun scripts/https-check.ts       # HTTPS report
+bun run dev                      # helper app, see .env.example
 ```
 
-Copy `.env.example` to `.env` for the helper app. The repo needs one secret, `CROSS_REPO_TOKEN`: a fine-grained token with *Actions: write* and *Commit statuses: write* on this repo and `chaosberlin/backend`.
-
-| Path | Purpose |
-| --- | --- |
-| `requests/` | One YAML file per subdomain |
-| `src/validation.ts` | Request format rules, shared by CI, the helper app and the portal |
-| `src/permissions.ts` | Who may add, edit or delete which name |
-| `scripts/check-pr.ts` | PR gate: format + permissions, run from `main` |
-| `.github/workflows/validate.yml` | Runs `check-pr.ts` on every PR |
-| `.github/workflows/notify-backend.yml` | Starts the backend after merges to `main` |
-| `index.ts`, `src/auth.ts`, `src/store.ts` | Local helper app |
-| `portal.js`, `index.html` | Static portal |
+Secret: `CROSS_REPO_TOKEN`, a fine-grained token with *Actions* and *Commit statuses* write access on this repo and `chaosberlin/backend`.
