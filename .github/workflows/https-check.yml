@@ -1,0 +1,46 @@
+name: HTTPS check
+
+# Probes every web subdomain and keeps the "HTTPS status" issue up to date.
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: https-check
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - name: Probe subdomains
+        id: probe
+        continue-on-error: true
+        run: bun scripts/https-check.ts --domain "${{ vars.BASE_DOMAIN || 'chaos.berlin' }}" > report.md
+      - name: Update status issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          number=$(gh issue list -R "$GITHUB_REPOSITORY" --state all --search 'in:title "HTTPS status"' --json number,title -q '.[] | select(.title == "HTTPS status") | .number' | head -1)
+          if [ -z "$number" ]; then
+            gh issue create -R "$GITHUB_REPOSITORY" --title "HTTPS status" --body-file report.md
+          else
+            gh issue edit "$number" -R "$GITHUB_REPOSITORY" --body-file report.md
+            gh issue reopen "$number" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          fi
+      - name: Fail if a subdomain has no HTTPS
+        if: steps.probe.outcome == 'failure'
+        run: exit 1

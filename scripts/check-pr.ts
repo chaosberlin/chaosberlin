@@ -46,6 +46,15 @@ for (const line of diff ? diff.split("\n") : []) {
     continue;
   }
 
+  // Symlinks or submodules would make the backend read files outside requests/.
+  if (status !== "D") {
+    const mode = (await $`git ls-tree pr/head -- ${path}`.text()).split(" ")[0];
+    if (mode !== "100644" && mode !== "100755") {
+      problems.push({ file, message: "must be a regular file (no symlinks or submodules)" });
+      continue;
+    }
+  }
+
   const beforeText = await gitShow("HEAD", path);
   const afterText = status === "D" ? undefined : await gitShow("pr/head", path);
   if (afterText === undefined) await rm(join(work, file), { force: true });
