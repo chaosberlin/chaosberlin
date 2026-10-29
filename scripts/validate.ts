@@ -12,7 +12,7 @@ for (const r of results) {
     console.error(`fail ${r.file}: ${(r as { errors: string[] }).errors.join("; ")}`);
   }
 }
-if (results.length === 0) console.log("no requests/*.json files yet — nothing to validate");
+if (results.length === 0) console.log("no requests/*.yaml files yet — nothing to validate");
 if (failed > 0) {
   console.error(`${failed} invalid request(s)`);
   process.exit(1);

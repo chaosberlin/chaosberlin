@@ -36,7 +36,7 @@ Bun.serve({
     "/app": app,
     "/registry.json": async () => {
       const requests = await validateAll();
-      return json(requests.filter(r => r.ok && r.file !== "example.json").map(r => (r as { value: object }).value));
+      return json(requests.filter(r => r.ok).map(r => (r as { value: object }).value));
     },
 
     "/api/health": () => json({ ok: true, domain: BASE_DOMAIN }),
@@ -102,7 +102,7 @@ Bun.serve({
       return json({ user });
     },
 
-    // Authenticated helper: creates/updates requests/<sub>.json locally.
+    // Authenticated helper: creates/updates requests/<sub>.yaml locally.
     // Merging to main still goes through a GitHub PR (see requests/README.md).
     "/api/requests": {
       GET: async () => json({ requests: await validateAll() }),
@@ -119,7 +119,7 @@ Bun.serve({
         await saveRequest(v.value);
         return json({
           ok: true,
-          file: `requests/${v.value.subdomain}.json`,
+          file: `requests/${v.value.subdomain}.yaml`,
           fqdn: `${v.value.subdomain}.${BASE_DOMAIN}`,
           next: "open a PR with this file — merge triggers Cloudflare provisioning",
         });

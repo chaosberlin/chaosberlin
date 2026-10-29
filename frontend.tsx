@@ -49,7 +49,7 @@ function App() {
         {me ? <> as <b>{me.login}</b> (<a href="/api/auth/logout">logout</a>)</> : " (required)"}
       </p>
       <p>
-        2. Request a name → creates <code>requests/&lt;name&gt;.json</code> → open a PR.{" "}
+        2. Request a name → creates <code>requests/&lt;name&gt;.yaml</code> → open a PR.{" "}
         3. Merge triggers GitHub Action → Cloudflare DNS for <code>*.{domain}</code>.
       </p>
 

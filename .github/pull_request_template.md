@@ -15,17 +15,16 @@
 
 ## 📄 Request file
 
-Add exactly **one** file, `requests/<name>.json`:
+Add or edit **one** file, `requests/<name>.yaml` (start from [`requests/example.yaml`](../blob/main/requests/example.yaml)):
 
-```json
-{
-  "subdomain": "alice",
-  "type": "CNAME",
-  "content": "alice.github.io",
-  "proxied": false,
-  "owner": "your-github-username",
-  "description": "My personal site"
-}
+```yaml
+subdomain: alice
+type: CNAME
+content: alice.github.io
+proxied: false
+owner: your-github-username
+# collaborators: [friend]   # optional: may edit records, not delete or share
+description: My personal site
 ```
 
 | `type`  | `content`                                         |
@@ -40,8 +39,8 @@ Add exactly **one** file, `requests/<name>.json`:
 
 ## ✅ Checklist
 
-- [ ] The file is `requests/<name>.json`, and `"subdomain"` matches `<name>`
-- [ ] `"owner"` is **my** GitHub username (the check fails otherwise)
+- [ ] The file is `requests/<name>.yaml`, and `subdomain` matches `<name>`
+- [ ] New name: `owner` is **my** GitHub username. Existing name: I'm its owner or a collaborator.
 - [ ] This PR changes nothing outside `requests/`
 - [ ] The name isn't reserved (`www`, `mail`, `api`, `admin`, … see `src/validation.ts`)
 - [ ] I'll set `<name>.chaos.berlin` as the custom domain at my host
@@ -49,7 +48,7 @@ Add exactly **one** file, `requests/<name>.json`:
 
 ## 🚦 What happens next
 
-1. **Validate** checks the file and that you own the name. Fix anything it flags.
+1. **Validate** checks the file and your permissions ([who can change what](../blob/main/requests/README.md#who-can-change-what)). Fix anything it flags.
 2. A maintainer reviews and merges.
 3. The DNS record goes live within a few minutes. The **`dns/publish`** status on the merge commit shows ✓ when it's done.
 
