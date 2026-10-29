@@ -1,0 +1,5 @@
+subdomain: hello
+type: CNAME
+content: chaosberlin.github.io
+proxied: false
+owner: someone-else
