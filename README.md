@@ -1,83 +1,76 @@
-## Publish to chaos.berlin
+# chaos.berlin
 
-The `Publish website` workflow builds the static interface and deploys it to GitHub Pages
-on pushes to `main`, or via manual dispatch. Enable GitHub Actions as the Pages source
-in repository Settings → Pages, and configure `chaos.berlin` as the custom domain.
-The build includes `CNAME` with that domain.
+Free `<name>.chaos.berlin` subdomains, handed out by pull request.
 
-Cloudflare must manage the domain DNS. For an apex domain pointing directly to GitHub
-Pages, use GitHub's documented apex DNS records and verify the domain in GitHub.
-Check existing DNS before changing records; preserve mail records.
-Worker routing for member subdomains is a separate deployment.
+Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([source](https://github.com/chaosberlin/hello), [request](requests/hello.json), [PR #1](https://github.com/chaosberlin/chaosberlin/pull/1))
 
-## Static design preview
+## Get a subdomain
 
-The public interface uses plain HTML, CSS, and JavaScript. It includes channel navigation,
-a namespace registry, a request JSON generator using the shared validator, and sample mailbox messages.
-The mailbox is a design preview, not a connected email service. The domain is intentionally
-unspecified until configured. Generated request files retain the existing schema.
+1. **Host your site.** For example GitHub Pages, Vercel, Netlify, Cloudflare Pages or your own server.
+2. **Add a request file.** [Create `requests/<name>.json`](https://github.com/chaosberlin/chaosberlin/new/main/requests). GitHub forks the repo for you.
 
-```sh
-bun run build:site
-python3 -m http.server 4173 --directory dist
-# Open http://localhost:4173
-```
+   ```json
+   {
+     "subdomain": "alice",
+     "type": "CNAME",
+     "content": "alice.github.io",
+     "proxied": false,
+     "owner": "your-github-username",
+     "description": "My personal site"
+   }
+   ```
 
-`dist/` is the GitHub Pages artifact. The build includes only public interface assets and
-validated requests, excluding `requests/example.json`. No backend or secrets are bundled.
-The existing authenticated backend portal remains available at `/app` with `bun run dev`.
+3. **Open a pull request.** The template has a checklist. The **validate** check must pass.
+4. **Wait for the merge.** The record goes live a few minutes after a maintainer merges. The `dns/publish` status on the merge commit shows ✓ when it's done.
+5. **Set `<name>.chaos.berlin` as the custom domain at your host.**
 
-# chaosberlin — subdomain self-service
+To change or give up a name, open a PR that edits or deletes your file.
 
-Anyone with a GitHub account can get `<name>.chaos.berlin` by opening a PR.
-This public repo is where requests come in. The DNS records are written by the private
-`chaosberlin/backend` repo, which holds the Cloudflare credentials.
+## Rules
+
+| Field | Rule |
+| --- | --- |
+| `subdomain` | `a-z`, `0-9`, `-`, max 63 characters. Must match the file name. Not [reserved](src/validation.ts) (`www`, `mail`, `api`, …). |
+| `type` | `CNAME` (hostname), `A` (public IPv4), `AAAA` (public IPv6) or `TXT` (max 255 characters) |
+| `owner` | Your GitHub username. You can only add, change or delete your own names. |
+| `proxied` | Optional. `true` routes the name through Cloudflare. Keep `false` for GitHub Pages, Vercel and Netlify. Not allowed for `TXT`. |
+| `ttl` | Optional. `1` (auto, the default) or 60–86400 seconds. |
+
+A PR may only touch `requests/<name>.json`. Names used for spam, phishing or malware are removed. More detail: [requests/README.md](requests/README.md).
 
 ## How it works
 
 ```
-add requests/<name>.json → open PR
-  → validate.yml checks the file and that you own the name (must pass)
-  → maintainer merges to main
-  → notify-backend.yml starts chaosberlin/backend's publish workflow
-  → backend re-validates, syncs Cloudflare DNS, and sets the
-    "dns/publish" commit status on the merge commit here
+PR adds requests/<name>.json ─→ validate (format + ownership) ─→ maintainer merges
+  ─→ notify-backend ─→ chaosberlin/backend: re-validate, sync Cloudflare DNS
+  ─→ dns/publish status on the merge commit
 ```
 
-- Request files: `requests/*.json` (see `requests/README.md` + `requests/example.json`)
-- Validation: `src/validation.ts` (shared by the site, the local backend and CI)
-- Local helper app (Bun): `index.ts` — serves UI + `/api/subdomains`, `/api/requests`, GitHub OAuth
+| Repo | Visibility | Role |
+| --- | --- | --- |
+| [chaosberlin/chaosberlin](https://github.com/chaosberlin/chaosberlin) | public | Request files, PR checks, this README (also the profile page) |
+| chaosberlin/backend | private | Holds the Cloudflare credentials, writes DNS, reports back |
+| [chaosberlin/hello](https://github.com/chaosberlin/hello) | public | Example site behind `hello.chaos.berlin` |
 
-## Run locally (no secrets needed to boot)
+[chaos.berlin](https://chaos.berlin) itself redirects here.
+
+## Development
 
 ```sh
 bun install
-cp .env.example .env   # keep placeholders, app still boots
-bun run dev            # http://localhost:3000
-bun test               # validation tests
-bun run validate       # checks requests/*.json
+bun test             # validation rules
+bun run validate     # check requests/*.json
+bun run dev          # local helper app at http://localhost:3000 (GitHub login, writes request files)
+bun run build:site   # static portal into dist/
 ```
 
-## Settings
+Copy `.env.example` to `.env` for the helper app. The repo needs one secret, `CROSS_REPO_TOKEN`: a fine-grained token with *Actions: write* and *Commit statuses: write* on this repo and `chaosberlin/backend`.
 
-- Secret `CROSS_REPO_TOKEN`: fine-grained PAT of `chaosberlin` for `chaosberlin/backend` +
-  `chaosberlin/chaosberlin` with **Actions: Read and write** and **Commit statuses: Read and write**.
-  It lets `notify-backend.yml` start the backend's publish workflow.
-- GitHub OAuth app for the local helper (`https://github.com/settings/developers`):
-  - Authorization callback: `http://localhost:3000/api/auth/callback` (dev)
-    + `https://<your-host>/api/auth/callback` (prod)
-  - Set `GITHUB_CLIENT_ID / SECRET / CALLBACK_URL` in `.env` + prod secrets.
-
-## Repo layout
-
-```
-index.ts            Bun.serve (UI + API + OAuth)
-frontend.tsx        tiny React UI
-src/validation.ts   PR file rules (single source of truth for this repo)
-src/auth.ts         GitHub OAuth + cookie session
-src/store.ts        requests/*.json helpers
-scripts/validate.ts CI validator
-.github/workflows/  validate.yml (on PR), notify-backend.yml (on merge), pages.yml (site)
-requests/           user PRs land here
-data/subdomains.json optional live registry mirror
-```
+| Path | Purpose |
+| --- | --- |
+| `requests/` | One JSON file per subdomain |
+| `src/validation.ts` | Request rules, shared by CI, the helper app and the portal |
+| `.github/workflows/validate.yml` | Checks PRs |
+| `.github/workflows/notify-backend.yml` | Starts the backend after merges to `main` |
+| `index.ts`, `src/auth.ts`, `src/store.ts` | Local helper app |
+| `portal.js`, `index.html` | Static portal |
