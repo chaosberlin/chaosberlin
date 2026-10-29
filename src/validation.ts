@@ -13,30 +13,38 @@ export interface SubdomainRequest {
 const SUBDOMAIN_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
 // Names we never hand out via self-service PRs. Keep apex + mail infra safe.
+// Keep in sync with reserved.json in chaosberlin/backend, which re-checks every request.
 export const RESERVED = new Set([
-  "@",
-  "www",
-  "mail",
-  "smtp",
-  "imap",
-  "pop",
-  "autoconfig",
-  "autodiscover",
-  "_dmarc",
-  "_domainkey",
-  "ns1",
-  "ns2",
-  "admin",
-  "api",
-  "auth",
-  "login",
-  "backend",
-  "cloudflare",
-  "github",
+  "@", "www", "mail", "webmail", "email", "smtp", "imap", "pop", "pop3", "mx",
+  "ns", "ns1", "ns2", "ns3", "dns", "ftp", "sftp", "ssh", "vpn", "autoconfig",
+  "autodiscover", "_dmarc", "_domainkey", "_spf", "_acme-challenge", "admin",
+  "administrator", "root", "api", "app", "backend", "chaos", "dashboard",
+  "status", "docs", "help", "support", "security", "abuse", "postmaster",
+  "hostmaster", "webmaster", "noreply", "no-reply", "github", "cloudflare",
+  "localhost", "internal", "login", "auth", "sso", "account", "accounts",
+  "billing", "pay", "cdn", "static", "assets",
 ]);
 
 const IPV4_RE =
   /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+// 0/8, 10/8, 100.64/10, 127/8, 169.254/16, 172.16/12, 192.168/16, multicast and above.
+function isPrivateIPv4(ip: string): boolean {
+  const [a, b] = ip.split(".").map(Number) as [number, number];
+  return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+}
+
+// URL parsing validates IPv6 in both Bun and the browser bundle (portal.js).
+function isIP6(ip: string): boolean {
+  if (!ip.includes(":")) return false;
+  try {
+    new URL(`http://[${ip}]/`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const HOSTNAME_RE =
   /^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))*\.?$/i;
 
@@ -70,14 +78,18 @@ export function validateRequest(
   if (!content) errors.push("content/target is required");
   else if (type === "A" && !IPV4_RE.test(content))
     errors.push("A record content must be a valid IPv4 address");
-  else if (type === "AAAA" && !content.includes(":"))
+  else if (type === "A" && isPrivateIPv4(content))
+    errors.push("A record content must be a public IPv4 address");
+  else if (type === "AAAA" && !isIP6(content))
     errors.push("AAAA record content must be a valid IPv6 address");
+  else if (type === "AAAA" && /^(::1?$|fe[89ab]|f[cd])/i.test(content))
+    errors.push("AAAA record content must be a public IPv6 address");
   else if (type === "CNAME" && !HOSTNAME_RE.test(content))
     errors.push("CNAME content must be a valid hostname (no IP, no URL)");
   else if (type === "CNAME" && IPV4_RE.test(content))
     errors.push("CNAME content must be a hostname, not an IP");
-  else if (type === "TXT" && content.length > 2048)
-    errors.push("TXT content must be <= 2048 chars");
+  else if (type === "TXT" && content.length > 255)
+    errors.push("TXT content must be <= 255 chars");
 
   if (r.ttl !== undefined) {
     const ttl = Number(r.ttl);

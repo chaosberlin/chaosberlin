@@ -1,0 +1,21 @@
+name: Notify backend
+
+# Hands merged requests to the private chaosberlin/backend repo, which writes DNS
+# and reports back with the "dns/publish" commit status.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "requests/**"
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start backend publish workflow
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: gh workflow run publish.yml -R chaosberlin/backend -f sha="$GITHUB_SHA"
