@@ -1,0 +1,5 @@
+subdomain: e2e-bad
+type: CNAME
+content: self-signed.badssl.com
+proxied: false
+owner: franz101
