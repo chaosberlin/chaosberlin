@@ -3,6 +3,6 @@
   "type": "CNAME",
   "content": "chaosberlin.github.io",
   "proxied": false,
-  "owner": "chaosberlin",
+  "owner": "franz101",
   "description": "hello, world — the first chaos.berlin subdomain"
 }
