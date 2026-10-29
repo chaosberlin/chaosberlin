@@ -1,4 +1,4 @@
-import { validateRequest } from './src/validation.ts';
+import { requestToYaml, validateRequest } from './src/validation.ts';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
 function showView() {
@@ -25,8 +25,8 @@ document.querySelector('#claim-form').addEventListener('submit', event => {
   if (knownNames.has(result.value.subdomain)) { status.textContent = 'A request already exists for this name. Check the registry before opening a PR.'; return; }
   const { subdomain, type, content, owner } = result.value;
   requestName = subdomain;
-  requestText = JSON.stringify({ subdomain, type, content, owner }, null, 2) + '\n';
-  document.querySelector('#request-path').textContent = `requests/${subdomain}.json`;
+  requestText = requestToYaml({ subdomain, type, content, proxied: false, owner });
+  document.querySelector('#request-path').textContent = `requests/${subdomain}.yaml`;
   document.querySelector('#request-json').textContent = requestText;
   document.querySelector('#request-output').hidden = false;
   status.textContent = 'Request generated locally. Review it before submitting.';
@@ -34,11 +34,11 @@ document.querySelector('#claim-form').addEventListener('submit', event => {
 document.querySelector('#copy-request').addEventListener('click', async event => {
   const button = event.currentTarget;
   try { await navigator.clipboard.writeText(requestText); button.textContent = '[ copied ]'; }
-  catch { status.textContent = 'Clipboard unavailable. Download the JSON instead.'; }
+  catch { status.textContent = 'Clipboard unavailable. Download the file instead.'; }
 });
 document.querySelector('#download-request').addEventListener('click', () => {
-  const url = URL.createObjectURL(new Blob([requestText], { type: 'application/json' }));
-  const link = document.createElement('a'); link.href = url; link.download = `${requestName}.json`; link.click();
+  const url = URL.createObjectURL(new Blob([requestText], { type: 'application/yaml' }));
+  const link = document.createElement('a'); link.href = url; link.download = `${requestName}.yaml`; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 const samples = [

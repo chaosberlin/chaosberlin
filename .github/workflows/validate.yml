@@ -1,7 +1,10 @@
 name: Validate subdomain requests
 
+# pull_request_target runs this file and scripts/check-pr.ts from main, not from
+# the PR, so a PR cannot weaken the checks. The PR's files are fetched and parsed
+# as data only. Never check out or run PR code in this workflow.
 on:
-  pull_request:
+  pull_request_target:
 
 permissions:
   contents: read
@@ -12,31 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
           persist-credentials: false
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-      - run: bun install
-      - name: Validate requests/*.json
-        run: bun ./scripts/validate.ts
-      # The checkout is the merge commit, so HEAD^1 is the base branch.
-      - name: Check ownership
+          bun-version: "1.4.4"
+      - name: Check format and permissions
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
-          MAINTAINER: ${{ github.repository_owner }}
-        run: |
-          author=$(echo "$AUTHOR" | tr A-Z a-z)
-          [ "$author" = "$(echo "$MAINTAINER" | tr A-Z a-z)" ] && { echo "maintainer PR, skipping"; exit 0; }
-          failed=0
-          while IFS=$'\t' read -r status path; do
-            [ -z "$path" ] && continue
-            if [[ ! "$path" =~ ^requests/[^/]+\.json$ ]] || [ "$path" = requests/example.json ]; then
-              echo "::error file=$path::only requests/<name>.json may be changed in a request PR"; failed=1; continue
-            fi
-            if [ "$status" = A ]; then owner=$(jq -r .owner "$path" 2>/dev/null); else owner=$(git show "HEAD^1:$path" | jq -r .owner 2>/dev/null); fi
-            if [ "$(echo "$owner" | tr A-Z a-z)" != "$author" ]; then
-              echo "::error file=$path::owner is '$owner' but this PR is from '$AUTHOR'"; failed=1
-            fi
-          done < <(git diff --name-status --no-renames HEAD^1 HEAD)
-          exit $failed
+        run: bun scripts/check-pr.ts

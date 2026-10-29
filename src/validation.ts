@@ -7,8 +7,12 @@ export interface SubdomainRequest {
   ttl?: number;
   proxied?: boolean;
   owner: string;
+  collaborators?: string[];
   description?: string;
 }
+
+export const MAX_COLLABORATORS = 10;
+const GITHUB_USER_RE = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 
 const SUBDOMAIN_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
@@ -104,8 +108,25 @@ export function validateRequest(
 
   const owner = typeof r.owner === "string" ? r.owner.trim() : "";
   if (!owner) errors.push("owner (GitHub username) is required");
-  else if (!/^[a-z0-9-]{1,39}$/i.test(owner))
+  else if (!GITHUB_USER_RE.test(owner))
     errors.push("owner must be a valid GitHub username");
+
+  let collaborators: string[] | undefined;
+  if (r.collaborators !== undefined) {
+    if (!Array.isArray(r.collaborators) || r.collaborators.length > MAX_COLLABORATORS)
+      errors.push(`collaborators must be a list of at most ${MAX_COLLABORATORS} GitHub usernames`);
+    else {
+      collaborators = r.collaborators.map((c) => (typeof c === "string" ? c.trim() : ""));
+      if (collaborators.some((c) => !GITHUB_USER_RE.test(c)))
+        errors.push("collaborators must be valid GitHub usernames");
+      const lower = collaborators.map((c) => c.toLowerCase());
+      if (new Set(lower).size !== lower.length) errors.push("collaborators must not repeat");
+      if (lower.includes(owner.toLowerCase())) errors.push("the owner must not also be a collaborator");
+    }
+  }
+
+  const unknown = Object.keys(r).filter((k) => !REQUEST_KEYS.includes(k));
+  if (unknown.length) errors.push(`unknown field(s): ${unknown.join(", ")}`);
 
   if (
     r.description !== undefined &&
@@ -123,14 +144,25 @@ export function validateRequest(
       ttl: r.ttl === undefined ? 1 : Number(r.ttl),
       proxied: r.proxied === true,
       owner,
+      ...(collaborators?.length ? { collaborators } : {}),
       description:
         typeof r.description === "string" ? r.description : undefined,
     },
   };
 }
 
+const REQUEST_KEYS = ["subdomain", "type", "content", "ttl", "proxied", "owner", "collaborators", "description"];
+
 export function requestFilename(req: SubdomainRequest): string {
-  return `${req.subdomain.toLowerCase()}.json`;
+  return `${req.subdomain.toLowerCase()}.yaml`;
+}
+
+// Serializes a request as YAML. JSON strings and arrays are valid YAML scalars and
+// flow sequences, so this stays dependency-free and also works in the browser bundle.
+export function requestToYaml(req: Partial<SubdomainRequest>): string {
+  return REQUEST_KEYS.filter((k) => req[k as keyof SubdomainRequest] !== undefined)
+    .map((k) => `${k}: ${JSON.stringify(req[k as keyof SubdomainRequest])}`)
+    .join("\n") + "\n";
 }
 
 export function fqdn(subdomain: string, baseDomain: string): string {

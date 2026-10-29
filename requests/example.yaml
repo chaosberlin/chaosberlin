@@ -1,0 +1,10 @@
+# Copy this file to requests/<name>.yaml and open a pull request.
+# <name> must match `subdomain` below.
+
+subdomain: myapp              # → myapp.chaos.berlin
+type: CNAME                   # CNAME, A, AAAA or TXT
+content: myapp.pages.dev      # hostname for CNAME, public IP for A/AAAA, text for TXT
+proxied: false                # true = through Cloudflare; keep false for GitHub Pages/Vercel/Netlify
+owner: your-github-username   # must be you
+# collaborators: [friend1]    # optional: may edit the records, but not delete or share the name
+description: My demo
