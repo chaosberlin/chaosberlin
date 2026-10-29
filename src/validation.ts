@@ -153,12 +153,8 @@ export function validateRequest(
 
 const REQUEST_KEYS = ["subdomain", "type", "content", "ttl", "proxied", "owner", "collaborators", "description"];
 
-export function requestFilename(req: SubdomainRequest): string {
-  return `${req.subdomain.toLowerCase()}.yaml`;
-}
-
 // Serializes a request as YAML. JSON strings and arrays are valid YAML scalars and
-// flow sequences, so this stays dependency-free and also works in the browser bundle.
+// flow sequences, so this stays dependency-free.
 export function requestToYaml(req: Partial<SubdomainRequest>): string {
   return REQUEST_KEYS.filter((k) => req[k as keyof SubdomainRequest] !== undefined)
     .map((k) => `${k}: ${JSON.stringify(req[k as keyof SubdomainRequest])}`)

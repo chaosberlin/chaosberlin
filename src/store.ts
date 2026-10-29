@@ -1,9 +1,8 @@
-import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { requestToYaml, validateRequest, type SubdomainRequest } from "./validation";
+import { validateRequest, type SubdomainRequest } from "./validation";
 
 export const REQUESTS_DIR = join(import.meta.dir, "..", "requests");
-export const DATA_FILE = join(import.meta.dir, "..", "data", "subdomains.json");
 export const REQUEST_FILE_RE = /^[a-z0-9-]+\.yaml$/;
 const MAX_FILE_BYTES = 4096;
 
@@ -55,19 +54,4 @@ export async function validateAll(dir = REQUESTS_DIR): Promise<Result[]> {
     out.push({ file, ok: true, value: v.value });
   }
   return out;
-}
-
-export async function readRegistry(): Promise<SubdomainRequest[]> {
-  try {
-    return JSON.parse(await readFile(DATA_FILE, "utf8"));
-  } catch {
-    return [];
-  }
-}
-
-export async function saveRequest(req: SubdomainRequest): Promise<string> {
-  await mkdir(REQUESTS_DIR, { recursive: true });
-  const file = join(REQUESTS_DIR, `${req.subdomain.toLowerCase()}.yaml`);
-  await writeFile(file, requestToYaml(req));
-  return file;
 }

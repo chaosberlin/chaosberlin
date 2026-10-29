@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "chaosberlin-backend",
+      "name": "chaosberlin",
       "devDependencies": {
         "@types/bun": "latest",
       },

@@ -1,4 +1,4 @@
-// Shared validator for CI: `bun ./scripts/validate.ts [--changed-only]`
+// Validates every request file locally: `bun run validate`
 import { validateAll } from "../src/store";
 
 const results = await validateAll();
