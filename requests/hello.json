@@ -1,0 +1,8 @@
+{
+  "subdomain": "hello",
+  "type": "CNAME",
+  "content": "chaosberlin.github.io",
+  "proxied": false,
+  "owner": "franz101",
+  "description": "hello, world — the first chaos.berlin subdomain"
+}
