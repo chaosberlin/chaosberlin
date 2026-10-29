@@ -60,14 +60,3 @@ PR → validate (format + permissions, from main) → merge
 | [chaosberlin/chaosberlin](https://github.com/chaosberlin/chaosberlin) | requests, checks, profile page |
 | chaosberlin/backend (private) | Cloudflare credentials, DNS sync |
 | [chaosberlin/hello](https://github.com/chaosberlin/hello) | example site |
-
-## Development
-
-```sh
-bun install && bun test
-bun run validate                 # check requests/*.yaml
-bun scripts/https-check.ts       # HTTPS report
-bun run dev                      # helper app, see .env.example
-```
-
-Secret: `CROSS_REPO_TOKEN`, a fine-grained token with *Actions* and *Commit statuses* write access on this repo and `chaosberlin/backend`.
