@@ -14,6 +14,8 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    # The token lives in this environment, which only the main branch may use.
+    environment: backend-dispatch
     steps:
       - name: Start backend publish workflow
         env:
