@@ -18,4 +18,4 @@ jobs:
       - name: Start backend publish workflow
         env:
           GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
-        run: gh workflow run publish.yml -R chaosberlin/backend -f sha="$GITHUB_SHA"
+        run: gh workflow run publish.yml -R chaosberlin/backend --ref main -f sha="$GITHUB_SHA"
