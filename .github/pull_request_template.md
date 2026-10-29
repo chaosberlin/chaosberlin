@@ -15,7 +15,7 @@
 
 ## 📄 Request file
 
-Add or edit **one** file, `requests/<name>.yaml` (start from [`requests/example.yaml`](../blob/main/requests/example.yaml)):
+Add or edit **one** file, `requests/<name>.yaml` (or use [chaos.berlin/new](https://chaos.berlin/new)):
 
 ```yaml
 subdomain: alice
@@ -34,8 +34,8 @@ description: My personal site
 | `AAAA`  | a public IPv6 address                             |
 | `TXT`   | text, up to 255 characters                        |
 
-- Leave `proxied` as `false` for GitHub Pages, Vercel and Netlify, so they can issue your HTTPS certificate.
-- Remember to add `<name>.chaos.berlin` as the custom domain at your host as well.
+- **HTTPS:** with `proxied: false`, your host issues the certificate (GitHub Pages: turn on *Enforce HTTPS*). With `proxied: true`, Cloudflare does it.
+- Add `<name>.chaos.berlin` as the custom domain at your host.
 
 ## ✅ Checklist
 
