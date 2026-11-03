@@ -1,15 +1,14 @@
 # chaos.berlin
 
-Free `<name>.chaos.berlin` subdomains. One YAML file, one pull request.
+Community free `<name>.chaos.berlin` subdomains.
 
-**[→ Claim a subdomain](https://chaos.berlin/new)** · [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) · Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([request](requests/hello.yaml))
+**[→ Get a subdomain](https://chaos.berlin/new)** · [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) · Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([request](requests/hello.yaml))
 
-## Claim
+## How?
 
 1. Open [chaos.berlin/new](https://chaos.berlin/new). It creates `requests/<name>.yaml` in your fork.
 2. Fill it in and open a pull request. Two checks must pass: **validate** (format + permissions) and **https** (your target can serve HTTPS).
-3. A maintainer merges it, and DNS is live within minutes.
-4. Add `<name>.chaos.berlin` as the custom domain at your host.
+3. After approval the DNS is live within around 15 minutes.
 
 ```yaml
 subdomain: alice            # = file name
@@ -28,32 +27,13 @@ description: Personal site  # optional
 | `proxied` | `true` = traffic and HTTPS through Cloudflare. Not for TXT. |
 | `ttl` | `1` (auto) or 60–86400 |
 
-## Permissions
-
-| | Add | Edit records | Edit collaborators | Delete | Transfer |
-| --- | --- | --- | --- | --- | --- |
-| Anyone | ✅ as owner, max 5 | | | | |
-| Collaborator | | ✅ | | | |
-| Owner | | ✅ | ✅ | ✅ | |
-| Maintainer | ✅ | ✅ | ✅ | ✅ | ✅ |
-
-- A PR may only change `requests/<name>.yaml`.
-- These rules run from `main`, so a PR can't change them ([`src/permissions.ts`](src/permissions.ts)).
-
 ## HTTPS
 
-- `proxied: true`: Cloudflare serves HTTPS automatically.
-- `proxied: false`: your host issues the certificate once DNS points to it. GitHub Pages, Vercel, Netlify and Cloudflare Pages do this on their own. On GitHub Pages, also turn on *Enforce HTTPS*. On your own server, use Let's Encrypt.
+- `proxied: true`: Serves HTTPS automatically.
+- `proxied: false`: Your host issues the certificate once DNS points to it. On your own server, use Let's Encrypt.
 
 Every 6 hours, [`https-check.yml`](.github/workflows/https-check.yml) tests all names and updates the [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) issue.
 
-## How it works
-
-```
-PR → validate (format + permissions, from main) → merge
-   → notify-backend → chaosberlin/backend (private): re-validate, sync Cloudflare
-   → dns/publish status on the merge commit
-```
 
 | Repo | |
 | --- | --- |
