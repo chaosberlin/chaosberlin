@@ -2,7 +2,7 @@
 
 Community free `<name>.chaos.berlin` subdomains.
 
-**[→ Get a subdomain](https://chaos.berlin/new)** · [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) · Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([request](requests/hello.yaml))
+**[Get a subdomain](https://chaos.berlin/new)** · [HTTPS status](https://github.com/chaosberlin/chaosberlin/issues/5) · Example: [hello.chaos.berlin](https://hello.chaos.berlin) ([request](requests/hello.yaml))
 
 ## How?
 
